@@ -1,6 +1,6 @@
 import '../css/index.css'
 import {Scene, Sprite} from 'spritejs'
-window.addEventListener('touchstart',function(e){e.preventDefault()},{passive:false})
+window.addEventListener('touchstart',function(e){e.preventDefault()},{passive:false});
 //设备类型
 // function fIsMobile(){
 //     return /Android|iPhone|iPad|iPod|BlackBerry|webOS|Windows Phone|SymbianOS|IEMobile|Opera Mini/i.test(navigator.userAgent);
