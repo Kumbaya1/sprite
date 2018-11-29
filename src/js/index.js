@@ -35,6 +35,7 @@ let timer;
 let range = [(deviceHeight / 2) * 0.95, deviceHeight / 2];
 let chance = 3;
 let victory = 0;
+console.log(11)
 console.log(deviceWidth, deviceHeight)
 let opt = {
     opportunity: [new Sprite({
