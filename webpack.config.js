@@ -1,14 +1,14 @@
 const path = require('path');
 const webpack = require('webpack');
-const  htmlWebpackPlugin = require('html-webpack-plugin');
+const htmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin') //引入分离插件
 const config = {
-    entry:{
-        index:'./src/js/index.js'
+    entry: {
+        index: './src/js/idx.js'
     },
-    output:{
+    output: {
         filename: "[name].js",
-        path: path.resolve(__dirname,'dist')
+        path: path.resolve(__dirname, 'dist')
     },
     module: {
         rules: [
@@ -18,13 +18,21 @@ const config = {
                     fallback: 'style-loader',  // 相当于回滚，经postcss-loader和css-loader处理过的css最终再经过style-loader处理
                     use: ['css-loader', 'postcss-loader']
                 })
+            },
+            {
+                test: /\.(png|jpg|svg|gif)$/,  // 正则匹配图片格式名
+                use: [
+                    {
+                        loader: 'url-loader'  // 使用url-loader
+                    }
+                ]
             }
         ]
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(), // 热更新插件,
         new htmlWebpackPlugin({
-            template: path.join(__dirname,'/src/index.template.html')
+            template: path.join(__dirname, '/src/index.template.html')
         }),
         new ExtractTextPlugin('css/index.css') // 将css分离到/dist文件夹下的css文件夹中的index.css
 

@@ -1,6 +1,9 @@
 import '../css/index.css'
 import {Scene, Sprite} from 'spritejs'
-window.addEventListener('touchstart',function(e){e.preventDefault()},{passive:false});
+//移除长按默认事件
+window.addEventListener('touchstart', function (e) {
+    e.preventDefault()
+}, {passive: false});
 //设备类型
 // function fIsMobile(){
 //     return /Android|iPhone|iPad|iPod|BlackBerry|webOS|Windows Phone|SymbianOS|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -26,10 +29,56 @@ window.addEventListener('touchstart',function(e){e.preventDefault()},{passive:fa
 //         return 'mobile'
 //     }
 // }
-document.oncontextmenu=function(){return false;}
+// document.oncontextmenu=function(){return false;}
+/*
+*   chance 可用次数
+*   victory 胜利次数
+*   range 达成条件的范围
+*   sizeGap 每次力度增加最小单位
+*   active 力度条状态
+*   timeGap 每次力度变化时的时间最小间隔
+*/
+class BeansGame {
+    constructor({
+                    el = "body",
+                    Scene,
+                    Sprite,
+                    chance = 3,
+                    victory = 0,
+                    range = [0.95, 1],
+                    sizeGap = 0.03,
+                    active = {flag: "up", defaultSize: 0.2, activeSize: 0.2},
+                    timeGap = 100
+                }) {
+        try {
+            this.el = el;
+            this.sceneInstance = new Scene(el);
+            this.Sprite = Sprite;
+            this.layer = this.sceneInstance.layer();
+            this.chance = chance;
+            this.victory = victory;
+            this.range = range;
+            this.sizeGap = sizeGap;
+            this.active = active;
+            this.timer = null;
+            this.timeGap = timeGap;
+            this.width = this.layer.resolution[0];
+            this.height = this.layer.resolution[1];
+        } catch (e) {
+            console.error(e)
+        }
+    }
+    init() {
+
+
+    }
+}
+
+var Beans = new BeansGame({Scene:Scene,Sprite: Sprite});
 const scene = new Scene('#demo-quickStart');
 const layer = scene.layer();
 const [deviceWidth, deviceHeight] = layer.resolution;
+console.log(layer.resolution)
 let intensity = {flag: 'up', size: 20, defaultSize: 20};
 let timer;
 let range = [(deviceHeight / 2) * 0.95, deviceHeight / 2];
@@ -118,9 +167,11 @@ layer.append(opt.powerSymbol)
 layer.append(opt.powerButton)
 layer.append(opt.powerSymbolBox)
 let sizeGap = 3;
-function con(e){
+
+function con(e) {
     console.log(e)
 }
+
 opt.powerButton.on('touchstart', (evt) => {
     // evt.stopPropagation();
     evt.preventDefault();
@@ -162,9 +213,9 @@ opt.powerButton.on('touchend', (evt) => {
     if (range[0] <= intensity.size && range[1] >= intensity.size) {
         setTimeout(function () {
             victory++;
-            if(victory != 3){
+            if (victory != 3) {
                 alert('you are win')
-            }else{
+            } else {
                 alert("你获得了购物券")
             }
             opt.result[victory - 1].attr({
