@@ -26,6 +26,18 @@ const config = {
                         loader: 'url-loader'  // 使用url-loader
                     }
                 ]
+            },
+            {                             // jsx配置
+                test: /(\.jsx|\.js)$/,   
+                use: {                    // 注意use选择如果有多项配置，可写成这种对象形式
+                    loader: "babel-loader",
+                    options: {
+                        presets: [
+                            "env", "react"
+                        ]
+                    }
+                },
+                exclude: /node_modules/
             }
         ]
     },
@@ -34,7 +46,9 @@ const config = {
         new htmlWebpackPlugin({
             template: path.join(__dirname, '/src/index.template.html')
         }),
-        new ExtractTextPlugin('css/index.css') // 将css分离到/dist文件夹下的css文件夹中的index.css
+        new ExtractTextPlugin('css/index.css'),// 将css分离到/dist文件夹下的css文件夹中的index.css
+        new webpack.BannerPlugin('版权所有，翻版必究')  // new一个插件的实例 
+
 
     ],
     devServer: {
