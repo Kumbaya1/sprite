@@ -57,8 +57,6 @@ class BeansGame {
             this.powerProgess = null;
             this.stars = [];
             this.beans = [];
-            console.log(this.width)
-            console.log(this.height)
 
         } catch (e) {
             console.error(e)
@@ -88,14 +86,6 @@ class BeansGame {
             x: [mleft, mRight],
             y: [mtop, mBottom]
         };
-        // console.log(this.areaRange)
-        // console.log(attrSize)
-        // console.log(xy)
-        // console.log(machine)
-        // console.log(mleft)
-        // console.log(mRight)
-        // console.log(mtop)
-        // console.log(mBottom)
         //绘制力度条边框
         const posProgess = {
             pos: [this.width - 30, 20],
@@ -151,7 +141,6 @@ class BeansGame {
             let col = i % rowNum + 1;               //第几列
             let pLeft = left + this.size / 2 + (gap + this.size) * (col - 1);
             let pTop = top + this.size / 2 + (gap + this.size) * (row - 1);
-            // console.log(pLeft, pTop);
             let s = new this.Sprite(require('../img/i1.png')).attr({
                 anchor: 0.5,
                 size: [this.size, this.size],
@@ -191,7 +180,7 @@ class BeansGame {
             clearInterval(_self.timer)
             _self.chance--;
             if (_self.active.activeSize >= _self.range[0] && _self.active.activeSize <= _self.range[1]) {
-                console.log("one times win");
+                // console.log("one times win");
                 _self.victory++;
                 _self.stars[_self.victory - 1].attr({
                     textures: require("../img/i1.png")
@@ -199,11 +188,11 @@ class BeansGame {
             }
             if (_self.victory >= _self.condition) {
                 this.gameVistory();
-                console.log("达成条件")
+                // console.log("达成条件")
             }else{
                 if (_self.chance == 0) {
                     this.chanceOver();
-                    console.log('chance is over')
+                    // console.log('chance is over')
                 }
             }
             _self.isEatBeans = true;
@@ -238,7 +227,7 @@ class BeansGame {
         let layerX = evt.layerX;
         let layerY = evt.layerY;
         if (_self.areaRange.x[0] < layerX && _self.areaRange.x[1] > layerX && _self.areaRange.y[0] < layerY && _self.areaRange.y[1] > layerY) {
-            console.log('吃到豆了')
+            // console.log('吃到豆了')
             _self.isEatBeans = false;
             context.remove();
             this.resetPowerProgess();
@@ -262,7 +251,7 @@ class BeansGame {
                     target.attr({
                         size: [target.attr('size')[0], _self.active.activeSize * _self.active.maxSizeNum - 5]
                     })
-                    console.log(target.attr('size'))
+                    // console.log(target.attr('size'))
                 } else {
                     _self.active.flag = "down";
                     _self.active.activeSize = 1 - _self.sizeGap;
@@ -287,7 +276,7 @@ class BeansGame {
                 }
             }
         }, _self.timeGap)
-        console.log(target)
+        // console.log(target)
 
     }
     gameVistory(){
