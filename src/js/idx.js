@@ -1,5 +1,5 @@
 import '../css/index.css'
-import { Scene, Sprite } from 'spritejs'
+import { Scene, Sprite, Label } from 'spritejs'
 const path = require('path');
 //移除长按默认事件
 window.addEventListener('touchstart', function (e) {
@@ -17,25 +17,28 @@ document.oncontextmenu = function () { return false; }
 *   machine 豆浆机实例
 *   areaRange 吃豆范围
 *   isEatBeans 当前是否可以吃豆
+*   condition 达成胜利条件次数
 */
 class BeansGame {
     constructor({
         el = "body",
         Scene,
         Sprite,
+        Label,
         chance = 3,
         victory = 0,
         range = [0.95, 1],
         sizeGap = 0.07,
         condition = 3,
         active = { flag: "up", defaultSize: 0, activeSize: 0, maxSizeNum: null },
-        timeGap = 90
+        timeGap = 50
     }) {
         try {
             this.el = el;
             this.sceneInstance = new Scene(el);
             this.Sprite = Sprite;
             this.layer = this.sceneInstance.layer();
+            this.Label = Label;
             this.chance = chance;
             this.victory = victory;
             this.range = range;
@@ -52,6 +55,8 @@ class BeansGame {
             this.areaRange = {};
             this.isEatBeans = true;
             this.powerProgess = null;
+            this.stars = [];
+            this.beans = [];
             console.log(this.width)
             console.log(this.height)
 
@@ -62,23 +67,7 @@ class BeansGame {
 
     init({ left = 10, top = 10, gap = 10, rowNum = 2 } = {}) {
         //绘制豆子
-        for (let i = 0; i < this.chance; i++) {
-            let row = Math.ceil((i + 1) / rowNum);  //第几行
-            let col = i % rowNum + 1;               //第几列
-            let pLeft = left + this.size / 2 + (gap + this.size) * (col - 1);
-            let pTop = top + this.size / 2 + (gap + this.size) * (row - 1);
-            // console.log(pLeft, pTop);
-            let s = new this.Sprite(require('../img/i1.png')).attr({
-                anchor: 0.5,
-                size: [this.size, this.size],
-                pos: [pLeft, pTop],
-                zIndex: 1
-            });
-            this.layer.append(s)
-            // console.log(s)
-            let _self = this;
-            s.on('touchstart', (evt) => { _self.spriteTouchStart(s, evt, _self) })
-        }
+        this.drawBeans({ left =left, top = top, gap = gap, rowNum = rowNum } = {});
         //绘制豆浆机
         let machine = new this.Sprite(require('../img/beans_machine.png')).attr({
             anchor: 0.5,
@@ -150,6 +139,47 @@ class BeansGame {
         this.layer.append(powerBtn)
         powerBtn.on('touchstart', (evt) => { this.btnTouchStart(powerBtn, evt, this, powerProgess) })
         powerBtn.on('touchend', (evt) => { this.btnTouchEnd(powerBtn, evt, this, powerProgess) })
+        //绘制星星
+        this.drawStar();
+    }
+    //初始化豆子
+    drawBeans({ left = 10, top = 10, gap = 10, rowNum = 2 } = {}) {         
+        this.beans.forEach(i=>{i.remove()});
+        this.beans = [];
+        for (let i = 0; i < this.chance; i++) {
+            let row = Math.ceil((i + 1) / rowNum);  //第几行
+            let col = i % rowNum + 1;               //第几列
+            let pLeft = left + this.size / 2 + (gap + this.size) * (col - 1);
+            let pTop = top + this.size / 2 + (gap + this.size) * (row - 1);
+            // console.log(pLeft, pTop);
+            let s = new this.Sprite(require('../img/i1.png')).attr({
+                anchor: 0.5,
+                size: [this.size, this.size],
+                pos: [pLeft, pTop],
+                zIndex: 1
+            });
+            this.layer.append(s)
+            this.beans.push(s);
+            let _self = this;
+            s.on('touchstart', (evt) => { _self.spriteTouchStart(s, evt, _self) })
+        }
+    }
+    //初始化星星
+    drawStar(){
+        this.stars.forEach(i=>{i.remove()});
+        this.stars = [];
+        for (let i = 0; i < this.condition; i++) {
+            let s = new this.Sprite(require('../img/star.png')).attr({
+                anchor: 0.5,
+                size: [this.width * 0.12, this.width * 0.12],
+                pos: [this.width * 0.40 + i * this.width * 0.15, 10 + this.width * 0.12 / 2],
+                zIndex: 0,
+                // textures: require("../img/star.png"),
+            })
+            this.layer.append(s)
+            this.stars.push(s)
+        }
+
     }
     btnTouchStart(context, evt, _self, target) {
         if (!_self.isEatBeans) {
@@ -161,14 +191,20 @@ class BeansGame {
             clearInterval(_self.timer)
             _self.chance--;
             if (_self.active.activeSize >= _self.range[0] && _self.active.activeSize <= _self.range[1]) {
-                console.log("one times win")
+                console.log("one times win");
                 _self.victory++;
+                _self.stars[_self.victory - 1].attr({
+                    textures: require("../img/i1.png")
+                })
             }
-            if(_self.victory >= _self.condition){
+            if (_self.victory >= _self.condition) {
+                this.gameVistory();
                 console.log("达成条件")
-            }
-            if (_self.chance == 0) {
-                console.log('chance is over')
+            }else{
+                if (_self.chance == 0) {
+                    this.chanceOver();
+                    console.log('chance is over')
+                }
             }
             _self.isEatBeans = true;
         }
@@ -254,6 +290,77 @@ class BeansGame {
         console.log(target)
 
     }
+    gameVistory(){
+        let s = new this.Sprite({
+            anchor: [0.5, 0.5],
+            bgcolor: '#000000',
+            pos: [this.width / 2, this.height / 2],
+            size: [this.width, this.height],
+            zIndex: 999,
+            opacity: .7
+        })
+        let label = new this.Label("恭喜你获得胜利!!!\n点击任意处重新开始");
+        label.attr({
+            anchor: 0.5,
+            fillColor: '#f37',
+            pos: [this.width / 2, this.height / 2],
+            font: '22px "宋体"',
+            // width: 280,
+            lineBreak: 'normal',
+            border: [0, '#aaa'],
+            zIndex: 999,
+            textAlign:"center"
+
+        })
+        this.layer.append(s)
+        this.layer.append(label)
+        s.on('touchstart',evt=>{evt.stopDispatch();})
+        s.on('touchend', evt => {
+            s.remove();
+            label.remove();
+            this.resetGame();
+            evt.stopDispatch();
+        })
+    }
+    chanceOver() {
+        let s = new this.Sprite({
+            anchor: [0.5, 0.5],
+            bgcolor: '#000000',
+            pos: [this.width / 2, this.height / 2],
+            size: [this.width, this.height],
+            zIndex: 999,
+            opacity: .7
+        })
+        let label = new this.Label("失败\n点击任意处重新开始");
+        label.attr({
+            anchor: 0.5,
+            fillColor: '#f37',
+            pos: [this.width / 2, this.height / 2],
+            font: '22px "宋体"',
+            // width: 280,
+            lineBreak: 'normal',
+            border: [0, '#aaa'],
+            zIndex: 999,
+            textAlign:"center"
+        })
+        this.layer.append(s)
+        this.layer.append(label)
+        s.on('touchstart',evt=>{evt.stopDispatch();})
+        s.on('touchend', evt => {
+            s.remove();
+            label.remove();
+            this.resetGame();
+            evt.stopDispatch();
+        })
+    }
+    resetGame() {
+        this.chance = 3;
+        this.victory = 0;
+        this.resetPowerProgess();
+        this.drawBeans();
+        this.drawStar();
+
+    }
     debounce(method, delay) {
         var timer = null;
         return function () {
@@ -266,5 +373,5 @@ class BeansGame {
     }
 }
 
-var Beans = new BeansGame({ Scene: Scene, Sprite: Sprite });
+var Beans = new BeansGame({ Scene: Scene, Sprite: Sprite, Label: Label });
 Beans.init();
