@@ -7,7 +7,7 @@ const config = {
         index: './src/js/idx.js'
     },
     output: {
-        filename: "[name].js",
+        filename: "js/[name].js",
         path: path.resolve(__dirname, 'dist')
     },
     module: {
@@ -22,8 +22,15 @@ const config = {
             {
                 test: /\.(png|jpg|svg|gif)$/,  // 正则匹配图片格式名
                 use: [
+                    // {
+                    //     loader: 'url-loader'  // 使用url-loader
+                    // }
                     {
-                        loader: 'url-loader'  // 使用url-loader
+                        loader: 'url-loader',
+                        options: {
+                            limit: 1000,  // 限制只有小于1kb的图片才转为base64，例子图片为1.47kb,所以不会被转化
+                            outputPath:"imgs"
+                        }
                     }
                 ]
             },
@@ -47,7 +54,7 @@ const config = {
             template: path.join(__dirname, '/src/index.template.html')
         }),
         new ExtractTextPlugin('css/index.css'),// 将css分离到/dist文件夹下的css文件夹中的index.css
-        new webpack.BannerPlugin('版权所有，翻版必究')  // new一个插件的实例 
+        new webpack.BannerPlugin('大师姐只爱金钱不谈感情')  // new一个插件的实例 
 
 
     ],

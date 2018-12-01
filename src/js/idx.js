@@ -49,14 +49,15 @@ class BeansGame {
             this.timeGap = timeGap;
             this.width = this.layer.resolution[0];
             this.height = this.layer.resolution[1];
-            this.size = this.width / 10;
+            this.size = this.width / 4;
             this.beansActive = { pos: [] };
             this.machine = { instance: null, pos: [] };
             this.areaRange = {};
             this.isEatBeans = true;
             this.powerProgess = null;
             this.stars = [];
-            this.beans = [];
+            this.beans = null;
+            this.tipLable = null;
 
         } catch (e) {
             console.error(e)
@@ -119,11 +120,10 @@ class BeansGame {
         this.powerProgess = powerProgess;
         this.layer.append(powerProgess)
         //绘制按钮
-        let powerBtn = new Sprite({
-            anchor: 0.5,
-            bgcolor: 'green',
-            pos: [this.width / 2, this.height * 3 / 4 + 50],
-            size: [50, 50],
+        let powerBtn = new Sprite(require("../img/pick_me.png")).attr({
+            anchor: 1,
+            pos: [posProgess.pos[0] - posProgess.size[0], posProgess.pos[1] + posProgess.size[1] - 5],
+            size: [this.width / 3, this.width / 3 * 0.8],
             borderRadius: 50,
         })
         this.layer.append(powerBtn)
@@ -131,34 +131,60 @@ class BeansGame {
         powerBtn.on('touchend', (evt) => { this.btnTouchEnd(powerBtn, evt, this, powerProgess) })
         //绘制星星
         this.drawStar();
+        //默认提示
+        this.tipLable = new this.Label();
+        this.tipLable.attr({
+            anchor: [0.5, 0],
+            fillColor: '#f37',
+            pos: [this.width / 2, this.width * 0.2],
+            font: '22px "宋体"',
+            lineBreak: 'normal',
+            border: [0, '#aaa'],
+            zIndex: 999,
+            textAlign: "center",
+        })
+        this.layer.append(this.tipLable)
+        this.showTip();
     }
     //初始化豆子
-    drawBeans({ left = 10, top = 10, gap = 10, rowNum = 2 } = {}) {         
-        this.beans.forEach(i=>{i.remove()});
-        this.beans = [];
-        for (let i = 0; i < this.chance; i++) {
-            let row = Math.ceil((i + 1) / rowNum);  //第几行
-            let col = i % rowNum + 1;               //第几列
-            let pLeft = left + this.size / 2 + (gap + this.size) * (col - 1);
-            let pTop = top + this.size / 2 + (gap + this.size) * (row - 1);
-            let s = new this.Sprite(require('../img/i1.png')).attr({
-                anchor: 0.5,
-                size: [this.size, this.size],
-                pos: [pLeft, pTop],
-                zIndex: 1
-            });
-            this.layer.append(s)
-            this.beans.push(s);
-            let _self = this;
-            s.on('touchstart', (evt) => { _self.spriteTouchStart(s, evt, _self) })
-        }
+    drawBeans({ left = 10, top = 10, gap = 10, rowNum = 2 } = {}) {
+        this.beans ? this.beans.remove() : '';
+        this.beansActive.pos = [left + this.size / 2, this.size * 1.18 / 2 + top];  // 存储开始拖拽时的位置
+        let s = new this.Sprite(require('../img/beans.png')).attr({
+            anchor: [0.5, 0.5],
+            size: [this.size, this.size * 1.18],
+            pos: this.beansActive.pos,
+            zIndex: 1
+        });
+        this.layer.append(s)
+        this.beans = s;
+        let _self = this;
+        s.on('touchstart', (evt) => { _self.spriteTouchStart(s, evt, _self) })
+        // this.beans.forEach(i => { i.remove() });
+        // this.beans = [];
+        // for (let i = 0; i < this.chance; i++) {
+        //     let row = Math.ceil((i + 1) / rowNum);  //第几行
+        //     let col = i % rowNum + 1;               //第几列
+        //     let pLeft = left + this.size / 2 + (gap + this.size) * (col - 1);
+        //     let pTop = top + this.size / 2 + (gap + this.size) * (row - 1);
+        //     let s = new this.Sprite(require('../img/i1.png')).attr({
+        //         anchor: 0.5,
+        //         size: [this.size, this.size],
+        //         pos: [pLeft, pTop],
+        //         zIndex: 1
+        //     });
+        //     this.layer.append(s)
+        //     this.beans.push(s);
+        //     let _self = this;
+        //     s.on('touchstart', (evt) => { _self.spriteTouchStart(s, evt, _self) })
+        // }
     }
     //初始化星星
-    drawStar(){
-        this.stars.forEach(i=>{i.remove()});
+    drawStar() {
+        this.stars.forEach(i => { i.remove() });
         this.stars = [];
         for (let i = 0; i < this.condition; i++) {
-            let s = new this.Sprite(require('../img/star.png')).attr({
+            let s = new this.Sprite(require('../img/star_normal.png')).attr({
                 anchor: 0.5,
                 size: [this.width * 0.12, this.width * 0.12],
                 pos: [this.width * 0.40 + i * this.width * 0.15, 10 + this.width * 0.12 / 2],
@@ -170,34 +196,46 @@ class BeansGame {
         }
 
     }
+    //提示信息
+    showTip({ text = "还剩3次机会" } = {}) {
+        this.tipLable.attr({
+            text: text
+        })
+    }
+    //力度按钮按下
     btnTouchStart(context, evt, _self, target) {
         if (!_self.isEatBeans) {
             _self.changePowerProgess(_self, target);
         }
     }
+    //力度按钮松开
     btnTouchEnd(context, evt, _self, target) {
         if (!_self.isEatBeans) {
             clearInterval(_self.timer)
             _self.chance--;
+            this.showTip({ text: `还剩${_self.chance}次机会` });
             if (_self.active.activeSize >= _self.range[0] && _self.active.activeSize <= _self.range[1]) {
                 // console.log("one times win");
                 _self.victory++;
                 _self.stars[_self.victory - 1].attr({
-                    textures: require("../img/i1.png")
+                    textures: require("../img/star.png")
                 })
             }
             if (_self.victory >= _self.condition) {
                 this.gameVistory();
                 // console.log("达成条件")
-            }else{
+            } else {
                 if (_self.chance == 0) {
                     this.chanceOver();
                     // console.log('chance is over')
+                } else {
+                    this.drawBeans();
                 }
             }
             _self.isEatBeans = true;
         }
     }
+    //重置力度条进度状态
     resetPowerProgess() {
         this.active.flag = "up";
         this.active.activeSize = 0;
@@ -207,14 +245,17 @@ class BeansGame {
             size: [this.powerProgess.attr("size")[0], this.active.defaultSize * this.active.maxSizeNum]
         })
     }
+    //豆子事件
     spriteTouchStart(context, evt, _self) {
+        evt.stopDispatch();
         // console.log('spriteTouchStart')
         if (_self.isEatBeans) {
-            _self.beansActive.pos = [evt.layerX, evt.layerY];  // 存储开始拖拽时的位置
+            // _self.beansActive.pos = [evt.layerX, evt.layerY];  // 存储开始拖拽时的位置
             context.on('touchmove', (evt) => { _self.spriteTouchMove(context, evt, _self) })
         }
     }
     spriteTouchMove(context, evt, _self) {
+        evt.stopDispatch();
         // console.log('spriteTouchMove')
         // console.log(evt)
         context.attr({
@@ -224,6 +265,7 @@ class BeansGame {
         // context.on('touchend',_self.debounce(_self.spriteTouchEnd,3000))
     }
     spriteTouchEnd(context, evt, _self) {
+        evt.stopDispatch();
         let layerX = evt.layerX;
         let layerY = evt.layerY;
         if (_self.areaRange.x[0] < layerX && _self.areaRange.x[1] > layerX && _self.areaRange.y[0] < layerY && _self.areaRange.y[1] > layerY) {
@@ -239,6 +281,7 @@ class BeansGame {
         // console.log(evt)
 
     }
+    //力度条状态变化
     changePowerProgess(_self, target) {
         // let active = _self.active;
         // active = { flag: "up", defaultSize: 0.2, activeSize: 0.2 ,maxSizeNum},
@@ -279,7 +322,8 @@ class BeansGame {
         // console.log(target)
 
     }
-    gameVistory(){
+    //游戏胜利
+    gameVistory() {
         let s = new this.Sprite({
             anchor: [0.5, 0.5],
             bgcolor: '#000000',
@@ -298,12 +342,12 @@ class BeansGame {
             lineBreak: 'normal',
             border: [0, '#aaa'],
             zIndex: 999,
-            textAlign:"center"
+            textAlign: "center"
 
         })
         this.layer.append(s)
         this.layer.append(label)
-        s.on('touchstart',evt=>{evt.stopDispatch();})
+        s.on('touchstart', evt => { evt.stopDispatch(); })
         s.on('touchend', evt => {
             s.remove();
             label.remove();
@@ -311,6 +355,7 @@ class BeansGame {
             evt.stopDispatch();
         })
     }
+    //次数耗光
     chanceOver() {
         let s = new this.Sprite({
             anchor: [0.5, 0.5],
@@ -330,11 +375,11 @@ class BeansGame {
             lineBreak: 'normal',
             border: [0, '#aaa'],
             zIndex: 999,
-            textAlign:"center"
+            textAlign: "center"
         })
         this.layer.append(s)
         this.layer.append(label)
-        s.on('touchstart',evt=>{evt.stopDispatch();})
+        s.on('touchstart', evt => { evt.stopDispatch(); })
         s.on('touchend', evt => {
             s.remove();
             label.remove();
@@ -342,12 +387,15 @@ class BeansGame {
             evt.stopDispatch();
         })
     }
+
+    //游戏重置
     resetGame() {
         this.chance = 3;
         this.victory = 0;
         this.resetPowerProgess();
         this.drawBeans();
         this.drawStar();
+        this.showTip();
 
     }
     debounce(method, delay) {
