@@ -27,7 +27,7 @@ class BeansGame {
         Label,
         chance = 3,
         victory = 0,
-        range = [0.95, 1],
+        range = [0.674, 1],
         sizeGap = 0.07,
         condition = 3,
         active = { flag: "up", defaultSize: 0, activeSize: 0, maxSizeNum: null },
@@ -53,11 +53,13 @@ class BeansGame {
             this.beansActive = { pos: [] };
             this.machine = { instance: null, pos: [] };
             this.areaRange = {};
-            this.isEatBeans = true;
+            this.isEatBeans = false;
             this.powerProgess = null;
             this.stars = [];
             this.beans = null;
             this.tipLable = null;
+            this.timerMachine = null;
+            this.powerProgessBorder = null;
 
         } catch (e) {
             console.error(e)
@@ -65,13 +67,21 @@ class BeansGame {
     }
 
     init({ left = 10, top = 10, gap = 10, rowNum = 2 } = {}) {
+        //绘制logo
+        let logo = new this.Sprite(require('../img/logo.png')).attr({
+            anchor: [0, 0],
+            size: [this.width * 0.5, this.width * 0.5 * 0.15],
+            pos: [10, 30],
+            zIndex: 0
+        })
+        this.layer.append(logo);
         //绘制豆子
-        this.drawBeans({ left =left, top = top, gap = gap, rowNum = rowNum } = {});
+        // this.drawBeans({ left =left, top = top, gap = gap, rowNum = rowNum } = {});
         //绘制豆浆机
-        let machine = new this.Sprite(require('../img/beans_machine.png')).attr({
-            anchor: 0.5,
+        let machine = new this.Sprite(require('../img/1.png')).attr({
+            anchor: [0.5, 1],
             size: [this.width * 0.8, this.width * 0.8],
-            pos: [this.width / 2, this.height - this.width / 2],
+            pos: [this.width / 2, this.height - this.width * 0.26],
             zIndex: 0
         })
         this.machine.instance = machine;
@@ -94,36 +104,52 @@ class BeansGame {
         };
         let powerProgessBorder = new Sprite({
             anchor: [0.5, 0],
-            bgcolor: 'transparent',
+            // bgcolor: '#f2c988',
+            textures: require("../img/progess.png"),
             pos: posProgess.pos,
             size: posProgess.size,
-            borderRadius: 50,
-            border: {
-                style: [5, 0],
-                width: 5,
-                color: '#aaa',
-            },
-            boxSizing: 'border-box',
-            zIndex: 1
+            // size: [42,238],
+            // borderRadius: 50,
+            // opacity: .6,
+            // shadow: {
+            //     blur: 8,
+            //     color: '#eee',
+            //     offset: [5, 5],
+            // },
+            // border: {
+            //     style: [5, 0],
+            //     width: 5,
+            //     color: '#fdebcb',
+            // },
+            // boxSizing: 'border-box',
+            zIndex: 0
         })
-        this.layer.append(powerProgessBorder)
+        this.layer.append(powerProgessBorder);
+        this.powerProgessBorder = powerProgessBorder;
         //绘制力度条
         let powerProgess = new Sprite({
             anchor: [0.5, 1],
-            bgcolor: '#EE2C2C',
-            pos: [posProgess.pos[0], posProgess.pos[1] + posProgess.size[1] - 5],
-            size: [posProgess.size[0] - 10, posProgess.size[1] * this.active.defaultSize - 5],
+            bgcolor: "#fae6bb",
+            // bgcolor: {
+            //     vector: [0, 0, 200, 200],
+            //     colors: [
+            //         {color: '#fae6bb', offset: 1},
+            //         {color: '#fe8787', offset: 0},
+            //     ]
+            // },
+            pos: [posProgess.pos[0], posProgess.pos[1] + posProgess.size[1] - 10],
+            size: [posProgess.size[0] - 12, posProgess.size[1] * this.active.defaultSize - 5],
             borderRadius: 60,
-            zIndex: 0
+            zIndex: 1
         })
-        this.active.maxSizeNum = posProgess.size[1] - 5;
+        this.active.maxSizeNum = posProgess.size[1] * 0.93;
         this.powerProgess = powerProgess;
         this.layer.append(powerProgess)
         //绘制按钮
         let powerBtn = new Sprite(require("../img/pick_me.png")).attr({
-            anchor: 1,
-            pos: [posProgess.pos[0] - posProgess.size[0], posProgess.pos[1] + posProgess.size[1] - 5],
-            size: [this.width / 3, this.width / 3 * 0.8],
+            anchor: 0.5,
+            pos: [this.width / 2, this.height * 0.92],
+            size: [this.width / 3, this.width / 3 * 0.28],
             borderRadius: 50,
         })
         this.layer.append(powerBtn)
@@ -134,9 +160,9 @@ class BeansGame {
         //默认提示
         this.tipLable = new this.Label();
         this.tipLable.attr({
-            anchor: [0.5, 0],
+            anchor: [0, 0],
             fillColor: '#f37',
-            pos: [this.width / 2, this.width * 0.2],
+            pos: [10, this.width * 0.2 + this.width * 0.5 * 0.15 + 40],
             font: '22px "宋体"',
             lineBreak: 'normal',
             border: [0, '#aaa'],
@@ -185,9 +211,9 @@ class BeansGame {
         this.stars = [];
         for (let i = 0; i < this.condition; i++) {
             let s = new this.Sprite(require('../img/star_normal.png')).attr({
-                anchor: 0.5,
+                anchor: 0,
                 size: [this.width * 0.12, this.width * 0.12],
-                pos: [this.width * 0.40 + i * this.width * 0.15, 10 + this.width * 0.12 / 2],
+                pos: [10 + i * this.width * 0.15, this.width * 0.5 * 0.15 + 40],
                 zIndex: 0,
                 // textures: require("../img/star.png"),
             })
@@ -204,14 +230,32 @@ class BeansGame {
     }
     //力度按钮按下
     btnTouchStart(context, evt, _self, target) {
+
+        this.resetPowerProgess();
         if (!_self.isEatBeans) {
+            if (this.timerMachine === null) {
+                let numImg = 21;
+                let count = 1;
+                this.timerMachine = setInterval(() => {
+                    count++;
+                    count == 21 ? count = 13 : '';
+                    this.machine.instance.attr({
+                        textures: require(`../img/${count}.png`)
+                    })
+                }, 50)
+            }
             _self.changePowerProgess(_self, target);
         }
     }
     //力度按钮松开
     btnTouchEnd(context, evt, _self, target) {
         if (!_self.isEatBeans) {
+            clearInterval(this.timerMachine);
+            this.timerMachine = null;
             clearInterval(_self.timer)
+            this.machine.instance.attr({
+                textures: require(`../img/1.png`)
+            })
             _self.chance--;
             this.showTip({ text: `还剩${_self.chance}次机会` });
             if (_self.active.activeSize >= _self.range[0] && _self.active.activeSize <= _self.range[1]) {
@@ -220,6 +264,10 @@ class BeansGame {
                 _self.stars[_self.victory - 1].attr({
                     textures: require("../img/star.png")
                 })
+                _self.chance != 0 ? this.chanceOverShowTip() : '';
+            } else {
+                _self.chance != 0 ? this.chanceOverShowTip({ f: "fail" }) : '';
+
             }
             if (_self.victory >= _self.condition) {
                 this.gameVistory();
@@ -229,10 +277,10 @@ class BeansGame {
                     this.chanceOver();
                     // console.log('chance is over')
                 } else {
-                    this.drawBeans();
+                    // this.drawBeans();
                 }
             }
-            _self.isEatBeans = true;
+            _self.isEatBeans = false;
         }
     }
     //重置力度条进度状态
@@ -324,76 +372,129 @@ class BeansGame {
     }
     //游戏胜利
     gameVistory() {
+        this.gameOverShotTip();
+        // let s = new this.Sprite({
+        //     anchor: [0.5, 0.5],
+        //     bgcolor: '#000000',
+        //     pos: [this.width / 2, this.height / 2],
+        //     size: [this.width, this.height],
+        //     zIndex: 999,
+        //     opacity: .7,
+        //     textures:require("../img/success_bg.png")
+        // })
+        // let face = new this.Sprite(require("../img/success_face.png"));
+        // face.attr({
+        //     anchor: 0.5,
+        //     pos: [this.width / 2, this.height / 2],
+        //     size:[],
+        //     zIndex: 999,
+
+        // })
+        // this.layer.append(s)
+        // this.layer.append(face)
+        // s.on('touchstart', evt => { evt.stopDispatch(); })
+        // s.on('touchend', evt => {
+        //     s.remove();
+        //     face.remove();
+        //     this.resetGame();
+        //     evt.stopDispatch();
+        // })
+    }
+    //游戏结束
+    gameOverShotTip({ f = "quan" } = {}) {
         let s = new this.Sprite({
             anchor: [0.5, 0.5],
             bgcolor: '#000000',
             pos: [this.width / 2, this.height / 2],
             size: [this.width, this.height],
             zIndex: 999,
-            opacity: .7
+            opacity: .7,
+            textures: require("../img/success_bg.png")
         })
-        let label = new this.Label("恭喜你获得胜利!!!\n点击任意处重新开始");
-        label.attr({
+        let face = new this.Sprite(require(`../img/${f}.png`));
+        face.attr({
             anchor: 0.5,
-            fillColor: '#f37',
             pos: [this.width / 2, this.height / 2],
-            font: '22px "宋体"',
-            // width: 280,
-            lineBreak: 'normal',
-            border: [0, '#aaa'],
+            size: [],
             zIndex: 999,
-            textAlign: "center"
 
         })
         this.layer.append(s)
-        this.layer.append(label)
+        this.layer.append(face)
         s.on('touchstart', evt => { evt.stopDispatch(); })
         s.on('touchend', evt => {
             s.remove();
-            label.remove();
+            face.remove();
             this.resetGame();
             evt.stopDispatch();
         })
     }
-    //次数耗光
+    //次数耗光、游戏失败
     chanceOver() {
+        this.gameOverShotTip({ f: "fail" })
+        // let s = new this.Sprite({
+        //     anchor: [0.5, 0.5],
+        //     bgcolor: '#000000',
+        //     pos: [this.width / 2, this.height / 2],
+        //     size: [this.width, this.height],
+        //     zIndex: 999,
+        //     opacity: .7
+        // })
+        // let label = new this.Label("失败\n点击任意处重新开始");
+        // label.attr({
+        //     anchor: 0.5,
+        //     fillColor: '#f37',
+        //     pos: [this.width / 2, this.height / 2],
+        //     font: '22px "宋体"',
+        //     // width: 280,
+        //     lineBreak: 'normal',
+        //     border: [0, '#aaa'],
+        //     zIndex: 999,
+        //     textAlign: "center"
+        // })
+        // this.layer.append(s)
+        // this.layer.append(label)
+        // s.on('touchstart', evt => { evt.stopDispatch(); })
+        // s.on('touchend', evt => {
+        //     s.remove();
+        //     label.remove();
+        //     this.resetGame();
+        //     evt.stopDispatch();
+        // })
+    }
+    chanceOverShowTip({ f = "success" } = {}) {
         let s = new this.Sprite({
             anchor: [0.5, 0.5],
             bgcolor: '#000000',
             pos: [this.width / 2, this.height / 2],
             size: [this.width, this.height],
             zIndex: 999,
-            opacity: .7
+            opacity: .7,
+            textures: require("../img/success_bg.png")
         })
-        let label = new this.Label("失败\n点击任意处重新开始");
-        label.attr({
+        let face = new this.Sprite(require(`../img/${f}_face.png`));
+        face.attr({
             anchor: 0.5,
-            fillColor: '#f37',
             pos: [this.width / 2, this.height / 2],
-            font: '22px "宋体"',
-            // width: 280,
-            lineBreak: 'normal',
-            border: [0, '#aaa'],
+            size: [],
             zIndex: 999,
-            textAlign: "center"
+
         })
         this.layer.append(s)
-        this.layer.append(label)
+        this.layer.append(face)
         s.on('touchstart', evt => { evt.stopDispatch(); })
         s.on('touchend', evt => {
             s.remove();
-            label.remove();
-            this.resetGame();
+            face.remove();
             evt.stopDispatch();
         })
     }
-
     //游戏重置
     resetGame() {
         this.chance = 3;
         this.victory = 0;
         this.resetPowerProgess();
-        this.drawBeans();
+        // this.drawBeans();
         this.drawStar();
         this.showTip();
 
